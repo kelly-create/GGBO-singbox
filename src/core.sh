@@ -1430,26 +1430,46 @@ footer_msg() {
 # URL or qrcode
 url_qr() {
     is_dont_show_info=1
-|| {
-            link="http://206.168.133.84/qr.html#${is_url}"
-            msg "\n------------- $is_config_name & QR code 二维码 -------------"
-            msg
+    info $2
+
+    # 1. 首先判断是否成功生成了链接 ($is_url 是否存在)
+    if [[ $is_url ]]; then
+
+        # --- 分支 A: 如果用户输入的是 sb url (只看文字链接) ---
+        if [[ $1 == 'url' ]]; then
+            msg "\n----------- $is_config_name & URL 链接 -----------"
+            msg "\n\e[${is_color}m${is_url}\e[0m\n"
+            footer_msg
+
+        # --- 分支 B: 如果用户输入的是 sb qr (默认，看二维码) ---
+        else
+            # 定义你的 Web 二维码地址
+            # 注意：确保 IP 是正确的，且是用 http (因为没有 SSL 证书)
+            local my_qr_link="http://206.168.133.84/qr.html#${is_url}"
+
+            msg "\n----------- $is_config_name & QR code 二维码 -----------"
+            
+            # 1. 显示在线网页链接
+            msg "\n点击链接查看二维码: \e[${is_color}m${my_qr_link}\e[0m\n"
+            
+            # 2. 生成终端二维码 (直接运行，因为 main 函数里已经强制安装了)
             if [[ $(type -P qrencode) ]]; then
                 qrencode -t ANSI "${is_url}"
             else
-                msg "请安装 qrencode: $(_green "$cmd update -y; $cmd install qrencode -y")"
+                # 万一安装失败的兜底提示
+                msg err "qrencode 未安装，无法在终端显示二维码。"
             fi
-            msg
-            msg "如果无法正常显示或识别, 请使用下面的链接来生成二维码:"
-            msg "\n\e[4;${is_color}m${link}\e[0m\n"
+
             footer_msg
-        }
+        fi
+
+    # 2. 如果没有生成链接 (异常情况)
     else
-        [[ $1 == 'url' ]] && {
-            err "($is_config_name) 无法生成 URL 链接."
-        } || {
-            err "($is_config_name) 无法生成 QR code 二维码."
-        }
+        if [[ $1 == 'url' ]]; then
+             err "($is_config_name) 无法生成 URL 链接，可能节点未启动。"
+        else
+             err "($is_config_name) 无法生成 QR code 二维码，可能节点未启动。"
+        fi
     fi
 }
 
