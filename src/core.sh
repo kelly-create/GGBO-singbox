@@ -94,7 +94,31 @@ servername_list=(
 
 is_random_ss_method=${ss_method_list[$(shuf -i 4-6 -n1)]} # random only use ss2022
 is_random_servername=${servername_list[$(shuf -i 0-${#servername_list[@]} -n1) - 1]}
+# === 新增：万能自动安装函数 ===
+check_install() {
+    local pkg=$1
+    # 检测命令是否存在
+    if [[ ! $(type -P $pkg) ]]; then
+        msg warn "检测到缺少常用工具: ${pkg}，正在自动安装..."
+        
+        # 简单判断包管理器 (如果没有定义 $cmd 变量)
+        if [[ -z $cmd ]]; then
+            cmd=$(type -P apt-get || type -P yum)
+        fi
 
+        # 执行安装
+        $cmd update -y >/dev/null 2>&1
+        $cmd install $pkg -y >/dev/null 2>&1
+        
+        # 安装完后再次检查
+        if [[ $(type -P $pkg) ]]; then
+            msg ok "${pkg} 安装成功!"
+        else
+            msg err "${pkg} 安装失败，请稍后手动安装."
+        fi
+    fi
+}
+# ============================
 msg() {
     echo -e "$@"
 }
@@ -1406,13 +1430,7 @@ footer_msg() {
 # URL or qrcode
 url_qr() {
     is_dont_show_info=1
-    info $2
-    if [[ $is_url ]]; then
-        [[ $1 == 'url' ]] && {
-            msg "\n------------- $is_config_name & URL 链接 -------------"
-            msg "\n\e[${is_color}m${is_url}\e[0m\n"
-            footer_msg
-        } || {
+|| {
             link="http://206.168.133.84/qr.html#${is_url}"
             msg "\n------------- $is_config_name & QR code 二维码 -------------"
             msg
@@ -1554,6 +1572,15 @@ is_main_menu() {
 
 # check prefer args, if not exist prefer args and show main menu
 main() {
+    # ▼▼▼ 在这里添加你要的常用插件 ▼▼▼
+    check_install vim       # 文本编辑器
+    check_install htop      # 漂亮的进程监控
+    check_install tree      # 目录树查看
+    check_install wget      # 下载工具
+    check_install curl      # 网络工具
+    check_install qrencode  # 二维码生成工具 (核心需求)
+    check_install socat     # 申请证书常用
+    # ▲▲▲ 添加结束 ▲▲▲
     case $1 in
     a | add | gen | no-auto-tls)
         [[ $1 == 'gen' ]] && is_gen=1
