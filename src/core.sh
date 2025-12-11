@@ -84,12 +84,10 @@ change_list=(
     "更改用户名 (Username)"
 )
 servername_list=(
-    www.amazon.com
-    www.ebay.com
-    www.paypal.com
-    www.cloudflare.com
-    dash.cloudflare.com
-    aws.amazon.com
+     www.nvidia.com                  
+     www.apple.com                   
+     www.microsoft.com               
+     www.adobe.com
 )
 
 is_random_ss_method=${ss_method_list[$(shuf -i 4-6 -n1)]} # random only use ss2022
