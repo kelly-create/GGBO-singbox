@@ -82,7 +82,7 @@ if [[ $local_install ]]; then
     fi
 else
     echo "Downloading scripts..."
-    _download_bootstrap "https://github.com/${is_sh_repo}/archive/refs/heads/main.tar.gz" "$is_sh_ok"
+    _download_bootstrap "https://github.com/${is_sh_repo}/archive/refs/heads/master.tar.gz" "$is_sh_ok"
     if [[ -f $is_sh_ok ]]; then
         mkdir -p $is_sh_dir
         tar zxf $is_sh_ok --strip-components 1 -C $is_sh_dir
