@@ -1208,8 +1208,14 @@ get() {
             ;;
         *reality*)
             net=reality
-            # [[ ! $is_servername ]] && is_servername=$is_random_servername
-            [[ ! $is_servername ]] && ask sni is_servername "请选择 SNI (serverName) 配置方式:"
+            # Auto-select random if not interactive (install.sh)
+            if [[ ! $is_servername ]]; then
+                if [[ $is_main_start ]]; then
+                    ask sni is_servername "请选择 SNI (serverName) 配置方式:"
+                else
+                    is_servername=$is_random_servername
+                fi
+            fi
             [[ ! $is_private_key ]] && get_pbk
             is_json_add="tls:{enabled:true,server_name:\"$is_servername\",reality:{enabled:true,handshake:{server:\"$is_servername\",server_port:443},private_key:\"$is_private_key\",short_id:[\"\"]}}"
             [[ $is_lower =~ "http" ]] && {

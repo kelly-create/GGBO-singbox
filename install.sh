@@ -355,6 +355,20 @@ main() {
     _rm $tmpdir
     
     msg ok "安装完成!"
+    
+    # Enable and start service explicitly
+    if systemctl is-enabled $is_core &>/dev/null; then
+        msg warn "Starting $is_core service..."
+        systemctl restart $is_core
+        sleep 2
+        if systemctl is-active --quiet $is_core; then
+            msg ok "$is_core is running."
+        else
+             msg err "$is_core failed to start. Check logs: journalctl -u $is_core"
+        fi
+    else
+        msg err "Service not enabled."
+    fi
 }
 
 main $@
