@@ -52,10 +52,10 @@ get_best_sni() {
     # Format: "domain|latency|ver|code|status"
     local results=()
     
-    msg warn "正在自动优选最佳 SNI 域名 (共 ${#domains[@]} 个)..."
-    echo "----------------------------------------------------------------"
-    printf "%-25s %-10s %-10s %-10s %-10s\n" "域名" "协议" "握手(ms)" "状态码" "评价"
-    echo "----------------------------------------------------------------"
+    msg warn "正在自动优选最佳 SNI 域名 (共 ${#domains[@]} 个)..." >&2
+    echo "----------------------------------------------------------------" >&2
+    printf "%-25s %-10s %-10s %-10s %-10s\n" "域名" "协议" "握手(ms)" "状态码" "评价" >&2
+    echo "----------------------------------------------------------------" >&2
     
     # Iterate and check
     for domain in "${domains[@]}"; do
@@ -102,17 +102,17 @@ get_best_sni() {
         fi
         
         # Real-time output line
-        printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}\n" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg"
+        printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}\n" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg" >&2
     done
     
-    echo "----------------------------------------------------------------"
+    echo "----------------------------------------------------------------" >&2
     
     if [[ -n "$best_domain" ]]; then
         local ms=$(awk -v t="$min_latency" 'BEGIN {printf "%.0f", t*1000}')
-        msg ok "优选结果: $best_domain (延迟: ${ms}ms)"
+        msg ok "优选结果: $best_domain (延迟: ${ms}ms)" >&2
         echo "$best_domain"
     else
-        msg err "未能找到优质域名，将使用默认值."
+        msg err "未能找到优质域名，将使用默认值." >&2
         echo "www.microsoft.com"
     fi
 }
