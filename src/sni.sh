@@ -48,46 +48,64 @@ get_best_sni() {
     local best_domain=""
     local min_latency=9999
     
+    # Store results for table display
+    # Format: "domain|latency|ver|code|status"
+    local results=()
+    
     msg warn "正在自动优选最佳 SNI 域名 (共 ${#domains[@]} 个)..."
+    echo "----------------------------------------------------------------"
+    printf "%-25s %-10s %-10s %-10s %-10s\n" "域名" "协议" "握手(ms)" "状态码" "评价"
+    echo "----------------------------------------------------------------"
     
     # Iterate and check
     for domain in "${domains[@]}"; do
-        # Progress indicator
-        # echo -ne "Testing $domain ... \r"
-        
         local result=$(check_domain "$domain")
         local http_ver=$(echo "$result" | cut -d'|' -f1)
         local status_code=$(echo "$result" | cut -d'|' -f2)
         local time_connect=$(echo "$result" | cut -d'|' -f3)
-
-        # Output detailed check result for user visibility
-        # Format: Domain [Proto] Status Latency
         local latency_ms=$(awk -v t="$time_connect" 'BEGIN {printf "%.0f", t*1000}')
         
+        local eval_msg="-"
+        local is_valid=0
+        local color_code=$gray
+
         # Logic to determine quality
-        # 1. Must be HTTP/2 (usually denotes modern/big infra)
-        # curl %{http_version} can return "2", "HTTP/2", "h2"
         if [[ "$http_ver" == "2" || "$http_ver" == "HTTP/2" || "$http_ver" == "h2" ]]; then
-            # 2. Status code should be 200-399 (relaxed to allow redirects)
             if [[ "$status_code" =~ ^[23] ]]; then
-                 echo -e "Testing $domain ... ${green}OK${none} ($latency_ms ms, $http_ver, $status_code)"
+                 is_valid=1
                  
-                 # 3. Check latency
+                 # Latency rating
+                 if [[ $latency_ms -lt 100 ]]; then
+                    eval_msg="极品"
+                    color_code=$green
+                 elif [[ $latency_ms -lt 300 ]]; then
+                    eval_msg="良好"
+                    color_code=$cyan
+                 else
+                    eval_msg="一般"
+                    color_code=$yellow
+                 fi
+                 
+                 # Check best
                  local is_better=$(awk -v t="$time_connect" -v min="$min_latency" 'BEGIN {if (t < min) print 1; else print 0}')
-                 
                  if [[ $is_better -eq 1 ]]; then
                      min_latency=$time_connect
                      best_domain=$domain
                  fi
             else
-                 echo -e "Testing $domain ... ${red}Skip${none} (Status: $status_code)"
+                 eval_msg="Skip(Status)"
+                 color_code=$red
             fi
         else
-            echo -e "Testing $domain ... ${red}Skip${none} (Proto: $http_ver)"
+            eval_msg="Skip(Proto)"
+            color_code=$red
         fi
+        
+        # Real-time output line
+        printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}\n" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg"
     done
     
-    # echo -e "\r\033[K" # Clear line
+    echo "----------------------------------------------------------------"
     
     if [[ -n "$best_domain" ]]; then
         local ms=$(awk -v t="$min_latency" 'BEGIN {printf "%.0f", t*1000}')
