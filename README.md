@@ -2,12 +2,13 @@
 
 一个基于 Sing-box 的一键安装与管理脚本。支持多种协议配置、SNI 优选等功能。
 
-## ✨ 特性 (Features)
+### ✨ 功能特性
 
-- **一键安装**: 自动化安装 Sing-box 核心及必要依赖。
-- **SNI 优选**: [NEW] 集成智能 SNI 优选功能，自动筛选低延迟、支持 HTTP/2 的最佳大厂域名（如 Microsoft, Azure 等），降低被墙风险。
-- **协议支持**: 支持 Reality, Hysteria2, VMess, VLESS, Trojan, Shadowsocks 等主流协议。
-- **自动管理**: 包含服务管理、日志查看、自动 TLS 配置 (Caddy) 等。
+- **一键安装**：支持 Debian/Ubuntu/CentOS/Fedora/ArchLinux 一键部署
+- **多协议支持**：集成 VLESS/VMess/Trojan/Hysteria2/Tuic 等主流协议
+- **智能 SNI 优选**：内置自动探测工具，智能选择延迟最低的优选域名（支持排序与中文评级）
+- **全中文界面**：深度汉化，操作直观友好
+- **自动化管理**：内置自动更新、自动证书续期、BBR 加速管理(Caddy) 等。
 
 ## 🚀 快速开始 (Quick Start)
 
