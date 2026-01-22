@@ -53,31 +53,41 @@ get_best_sni() {
     # Iterate and check
     for domain in "${domains[@]}"; do
         # Progress indicator
-        echo -ne "Testing $domain ... \r"
+        # echo -ne "Testing $domain ... \r"
         
         local result=$(check_domain "$domain")
         local http_ver=$(echo "$result" | cut -d'|' -f1)
         local status_code=$(echo "$result" | cut -d'|' -f2)
         local time_connect=$(echo "$result" | cut -d'|' -f3)
 
+        # Output detailed check result for user visibility
+        # Format: Domain [Proto] Status Latency
+        local latency_ms=$(awk -v t="$time_connect" 'BEGIN {printf "%.0f", t*1000}')
+        
         # Logic to determine quality
         # 1. Must be HTTP/2 (usually denotes modern/big infra)
-        if [[ "$http_ver" == "2" || "$http_ver" == "HTTP/2" ]]; then
-            # 2. Status code should be 200 or 3xx (403/404 is bad)
+        # curl %{http_version} can return "2", "HTTP/2", "h2"
+        if [[ "$http_ver" == "2" || "$http_ver" == "HTTP/2" || "$http_ver" == "h2" ]]; then
+            # 2. Status code should be 200-399 (relaxed to allow redirects)
             if [[ "$status_code" =~ ^[23] ]]; then
+                 echo -e "Testing $domain ... ${green}OK${none} ($latency_ms ms, $http_ver, $status_code)"
+                 
                  # 3. Check latency
-                 # awk for float comparison
                  local is_better=$(awk -v t="$time_connect" -v min="$min_latency" 'BEGIN {if (t < min) print 1; else print 0}')
                  
                  if [[ $is_better -eq 1 ]]; then
                      min_latency=$time_connect
                      best_domain=$domain
                  fi
+            else
+                 echo -e "Testing $domain ... ${red}Skip${none} (Status: $status_code)"
             fi
+        else
+            echo -e "Testing $domain ... ${red}Skip${none} (Proto: $http_ver)"
         fi
     done
     
-    echo -e "\r\033[K" # Clear line
+    # echo -e "\r\033[K" # Clear line
     
     if [[ -n "$best_domain" ]]; then
         local ms=$(awk -v t="$min_latency" 'BEGIN {printf "%.0f", t*1000}')
