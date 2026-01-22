@@ -1659,7 +1659,15 @@ main() {
         _try_enable_bbr
         ;;
     c | config | change)
-        change ${@:2}
+        is_try_change=1
+        change test $2
+        if [[ $is_change_id ]]; then
+            unset is_try_change
+            change "" ${@:2}
+        else
+            unset is_try_change
+            change ${@:2}
+        fi
         ;;
     # client | genc)
     #     create client $2
