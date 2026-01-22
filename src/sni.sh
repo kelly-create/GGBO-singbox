@@ -48,9 +48,8 @@ get_best_sni() {
     local best_domain=""
     local min_latency=9999
     
-    # Store results for table display
-    # Format: "domain|latency|ver|code|status"
-    local results=()
+    # Strings to store output for sorting
+    local output_list=""
     
     msg warn "正在自动优选最佳 SNI 域名 (共 ${#domains[@]} 个)..." >&2
     echo "----------------------------------------------------------------" >&2
@@ -68,43 +67,51 @@ get_best_sni() {
         local eval_msg="-"
         local is_valid=0
         local color_code=$gray
+        local sort_key=999999
 
         # Logic to determine quality
         if [[ "$http_ver" == "2" || "$http_ver" == "HTTP/2" || "$http_ver" == "h2" ]]; then
             if [[ "$status_code" =~ ^[23] ]]; then
                  is_valid=1
+                 sort_key=$latency_ms
                  
                  # Latency rating
                  if [[ $latency_ms -lt 100 ]]; then
-                    eval_msg="极品"
+                    eval_msg="★ 极品"
                     color_code=$green
                  elif [[ $latency_ms -lt 300 ]]; then
-                    eval_msg="良好"
+                    eval_msg="☆ 良好"
                     color_code=$cyan
                  else
-                    eval_msg="一般"
+                    eval_msg="○ 一般"
                     color_code=$yellow
                  fi
                  
-                 # Check best
+                 # Check best (still keep track of best for return value)
                  local is_better=$(awk -v t="$time_connect" -v min="$min_latency" 'BEGIN {if (t < min) print 1; else print 0}')
                  if [[ $is_better -eq 1 ]]; then
                      min_latency=$time_connect
                      best_domain=$domain
                  fi
             else
-                 eval_msg="Skip(Status)"
+                 eval_msg="状态异常"
                  color_code=$red
             fi
         else
-            eval_msg="Skip(Proto)"
+            eval_msg="协议不符"
             color_code=$red
         fi
         
-        # Real-time output line
-        printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}\n" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg" >&2
+        # Format the line but don't print yet. Add to list with sort key.
+        # Use a separator that won't appear in the content, e.g., '|||'
+        local line_content=$(printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg")
+        output_list+="${sort_key}|||${line_content}\n"
     done
     
+    # Sort and print
+    # sort -n (numeric sort) on the first field (latency key)
+    echo -e "$output_list" | sort -n -t'|' -k1 | awk -F'|||' '{print $2}' >&2
+
     echo "----------------------------------------------------------------" >&2
     
     if [[ -n "$best_domain" ]]; then
