@@ -112,3 +112,18 @@ check_install() {
         fi
     fi
 }
+
+# Get version and status
+if [[ -f $is_core_bin ]]; then
+    # sing-box version output: "sing-box version 1.8.0 ..."
+    # we want just "1.8.0" (or similar)
+    is_core_ver=$($is_core_bin version 2>/dev/null | head -n1 | awk '{print $3}')
+    if systemctl is-active --quiet $is_core; then
+        is_core_status=$(_green "运行中")
+    else
+        is_core_status=$(_red "未运行")
+    fi
+else
+    is_core_ver=""
+    is_core_status=$(_red "未安装")
+fi
