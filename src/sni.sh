@@ -109,8 +109,8 @@ get_best_sni() {
     done
     
     # Sort and print
-    # sort -n (numeric sort) will sort by the number at the start of the line automatically
-    echo -e "$output_list" | sort -n | awk -F'###' '{print $2}' >&2
+    # sort -n will sort by the number at key, then we strip the key and delimiter using sed
+    echo -e "$output_list" | sort -n | sed 's/^[0-9]*###//' >&2
 
     echo "----------------------------------------------------------------" >&2
     
