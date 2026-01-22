@@ -103,14 +103,14 @@ get_best_sni() {
         fi
         
         # Format the line but don't print yet. Add to list with sort key.
-        # Use a separator that won't appear in the content, e.g., '|||'
+        # Use a separator '###' which is safe for awk default string split or simple regex
         local line_content=$(printf "${color_code}%-25s %-10s %-10s %-10s %-10s${none}" "$domain" "$http_ver" "$latency_ms" "$status_code" "$eval_msg")
-        output_list+="${sort_key}|||${line_content}\n"
+        output_list+="${sort_key}###${line_content}\n"
     done
     
     # Sort and print
-    # sort -n (numeric sort) on the first field (latency key)
-    echo -e "$output_list" | sort -n -t'|' -k1 | awk -F'|||' '{print $2}' >&2
+    # sort -n (numeric sort) will sort by the number at the start of the line automatically
+    echo -e "$output_list" | sort -n | awk -F'###' '{print $2}' >&2
 
     echo "----------------------------------------------------------------" >&2
     
